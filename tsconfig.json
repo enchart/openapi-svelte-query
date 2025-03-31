@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "strict": true,
+    "useDefineForClassFields": true,
+    "lib": ["ESNext", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "sourceRoot": ".",
+    "jsx": "react-jsx",
+    "target": "ES2022",
+    "types": ["vitest/globals"]
+  },
+  "include": ["src", "test", "*.ts"],
+  "exclude": ["node_modules"]
+}
