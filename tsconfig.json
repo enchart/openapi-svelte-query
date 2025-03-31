@@ -13,9 +13,8 @@
     "outDir": "dist",
     "skipLibCheck": true,
     "sourceRoot": ".",
-    "jsx": "react-jsx",
     "target": "ES2022",
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
   "include": ["src", "test", "*.ts"],
   "exclude": ["node_modules"]

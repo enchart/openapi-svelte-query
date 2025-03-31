@@ -14,5 +14,8 @@
   "[typescript][typescriptreact]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
+  "[svelte]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
   "biome.lspBin": "./biome-test/node_modules/@biomejs/biome/bin/biome"
 }
