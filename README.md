@@ -69,4 +69,3 @@ Once your types have been generated from your schema, you can create a [fetch cl
 - [ ] Add support for `fetchQuery` and `fetchInfiniteQuery`
 - [ ] Add tests for `prefetchQuery` and `prefetchInfiniteQuery`
 - [ ] Add documentation for `prefetchQuery` and `prefetchInfiniteQuery`
-- [ ] Fix `prefetchInfiniteQuery` type error

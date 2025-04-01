@@ -159,6 +159,8 @@ export type PrefetchQueryMethod<Paths extends Record<string, Record<HttpMethod, 
     : [InitWithUnknowns<Init>, Options?]
 ) => Promise<void>;
 
+export type FixedOmit<T, U> = T extends any ? Pick<T, Exclude<keyof T, U>> : never;
+
 export type PrefetchInfiniteQueryMethod<
   Paths extends Record<string, Record<HttpMethod, {}>>,
   Media extends MediaType,
@@ -167,7 +169,7 @@ export type PrefetchInfiniteQueryMethod<
   Path extends PathsWithMethod<Paths, Method>,
   Init extends MaybeOptionalInit<Paths[Path], Method>,
   Response extends Required<FetchResponse<Paths[Path][Method], Init, Media>>, // note: Required is used to avoid repeating NonNullable in UseQuery types,
-  Options extends Omit<
+  Options extends FixedOmit<
     FetchInfiniteQueryOptions<
       Response["data"],
       Response["error"],
@@ -281,11 +283,10 @@ export default function createClient<Paths extends {}, Media extends MediaType =
       return queryClient.prefetchQuery(queryOptions(method, path, init as InitWithUnknowns<typeof init>, options));
     },
     prefetchInfiniteQuery: (queryClient, method, path, init, options) => {
-      const { pageParamName = "cursor", ...restOptions } = options;
+      const { pageParamName = "cursor" } = options;
       const { queryKey } = queryOptions(method, path, init);
 
-      // TODO: resolve this type error
-      // @ts-expect-error: pages and getNextPageParam type conflict
+      // TODO: check if it was fixed properly
       return queryClient.prefetchInfiniteQuery({
         queryKey,
         queryFn: async ({ queryKey: [method, path, init], pageParam = 0, signal }) => {
@@ -309,7 +310,7 @@ export default function createClient<Paths extends {}, Media extends MediaType =
           }
           return data;
         },
-        ...restOptions,
+        ...options,
       });
     },
   };
