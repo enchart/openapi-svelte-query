@@ -2,7 +2,7 @@
 
 > ⚠️ openapi-svelte-query is a **work-in-progress** port of [openapi-react-query](https://github.com/openapi-ts/openapi-typescript/tree/main/packages/openapi-react-query) for [Svelte](https://svelte.dev/).
 
-It is type-safe tiny wrapper (1 kb) around [@tanstack/svelte-query](https://tanstack.com/query/latest/docs/framework/svelte/overview) to work with OpenAPI schema.
+openapi-svelte-query is a type-safe tiny wrapper (1 kb) around [@tanstack/svelte-query](https://tanstack.com/query/latest/docs/framework/svelte/overview) to work with OpenAPI schema.
 
 It works by using [openapi-fetch](https://github.com/openapi-ts/openapi-typescript/tree/main/packages/openapi-fetch) and [openapi-typescript](https://github.com/openapi-ts/openapi-typescript/tree/main/packages/openapi-typescript) so you get all the following features:
 
