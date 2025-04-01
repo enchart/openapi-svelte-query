@@ -278,12 +278,6 @@ describe("client", () => {
         body: undefined,
       });
 
-      // const { result } = renderHook(() => client.useQuery("get", "/string-array"), { wrapper });
-
-      // await waitFor(() => expect(result.current.isFetching).toBe(false));
-
-      // const { data, error } = result.current;
-
       const { store } = renderStore(queryClient, () => client.createQuery("get", "/string-array"));
 
       await waitFor(() => expect(get(store).isFetching).toBe(false));
@@ -390,7 +384,7 @@ describe("client", () => {
         body: { title: "hello" },
       });
 
-      const { store } = renderStore(customQueryClient, () =>
+      const { store } = renderStore(queryClient, () =>
         client.createQuery(
           "get",
           "/blogposts/{post_id}",
@@ -425,5 +419,192 @@ describe("client", () => {
     });
   });
 
-  // TODO: test createMutation and createInfiniteQuery
+  describe("createMutation", () => {
+    describe("mutate", () => {
+      it("should resolve data properly and have error as null when successfull request", async () => {
+        const fetchClient = createFetchClient<paths>({ baseUrl });
+        const client = createClient(fetchClient);
+
+        useMockRequestHandler({
+          baseUrl,
+          method: "put",
+          path: "/comment",
+          status: 200,
+          body: { message: "Hello" },
+        });
+
+        const { store } = renderStore(queryClient, () => client.createMutation("put", "/comment"));
+
+        get(store).mutate({ body: { message: "Hello", replied_at: 0 } });
+
+        await waitFor(() => expect(get(store).isSuccess).toBe(true));
+
+        const { data, error } = get(store);
+
+        expect(data?.message).toBe("Hello");
+        expect(error).toBeNull();
+      });
+
+      it("should resolve error properly and have undefined data when failed request", async () => {
+        const fetchClient = createFetchClient<paths>({ baseUrl });
+        const client = createClient(fetchClient);
+
+        useMockRequestHandler({
+          baseUrl,
+          method: "put",
+          path: "/comment",
+          status: 500,
+          body: { code: 500, message: "Something went wrong" },
+        });
+
+        const { store } = renderStore(queryClient, () => client.createMutation("put", "/comment"));
+
+        get(store).mutate({ body: { message: "Hello", replied_at: 0 } });
+
+        await waitFor(() => expect(get(store).isError).toBe(true));
+
+        const { data, error } = get(store);
+
+        expect(data).toBeUndefined();
+        expect(error?.message).toBe("Something went wrong");
+      });
+
+      it("should resolve data properly and have error as null when mutationFn returns null", async () => {
+        const fetchClient = createFetchClient<paths>({ baseUrl });
+        const client = createClient(fetchClient);
+
+        useMockRequestHandler({
+          baseUrl,
+          method: "put",
+          path: "/comment",
+          status: 200,
+          body: null,
+        });
+
+        const { store } = renderStore(queryClient, () => client.createMutation("put", "/comment"));
+
+        get(store).mutate({ body: { message: "Hello", replied_at: 0 } });
+
+        await waitFor(() => expect(get(store).isSuccess).toBe(true));
+
+        const { data, error } = get(store);
+
+        expect(data).toBeNull();
+        expect(error).toBeNull();
+      });
+
+      it("should resolve data properly and have error as null when mutationFn returns undefined", async () => {
+        const fetchClient = createFetchClient<paths>({ baseUrl });
+        const client = createClient(fetchClient);
+
+        useMockRequestHandler({
+          baseUrl,
+          method: "put",
+          path: "/comment",
+          status: 200,
+          body: undefined,
+        });
+
+        const { store } = renderStore(queryClient, () => client.createMutation("put", "/comment"));
+
+        get(store).mutate({ body: { message: "Hello", replied_at: 0 } });
+
+        await waitFor(() => expect(get(store).isSuccess).toBe(true));
+
+        const { data, error } = get(store);
+
+        expect(error).toBeNull();
+        expect(data).toBeUndefined();
+      });
+
+      it("should use provided custom queryClient", async () => {
+        const fetchClient = createFetchClient<paths>({ baseUrl });
+        const client = createClient(fetchClient);
+        const customQueryClient = new QueryClient({});
+
+        useMockRequestHandler({
+          baseUrl,
+          method: "put",
+          path: "/comment",
+          status: 200,
+          body: { message: "Hello" },
+        });
+
+        const { store } = renderStore(customQueryClient, () =>
+          client.createMutation("put", "/comment", {}, customQueryClient),
+        );
+
+        get(store).mutate({ body: { message: "Hello", replied_at: 0 } });
+
+        await waitFor(() => expect(get(store).isSuccess).toBe(true));
+
+        const { data, error } = get(store);
+
+        expect(data?.message).toBe("Hello");
+        expect(error).toBeNull();
+      });
+    });
+
+    describe("mutateAsync", () => {
+      it("should resolve data properly", async () => {
+        const fetchClient = createFetchClient<paths>({ baseUrl });
+        const client = createClient(fetchClient);
+
+        useMockRequestHandler({
+          baseUrl,
+          method: "put",
+          path: "/comment",
+          status: 200,
+          body: { message: "Hello" },
+        });
+
+        const { result } = renderStore(queryClient, () => client.createMutation("put", "/comment"));
+
+        const data = await result.mutateAsync({ body: { message: "Hello", replied_at: 0 } });
+
+        expect(data.message).toBe("Hello");
+      });
+
+      it("should throw an error when failed request", async () => {
+        const fetchClient = createFetchClient<paths>({ baseUrl });
+        const client = createClient(fetchClient);
+
+        useMockRequestHandler({
+          baseUrl,
+          method: "put",
+          path: "/comment",
+          status: 500,
+          body: { code: 500, message: "Something went wrong" },
+        });
+
+        const { result } = renderStore(queryClient, () => client.createMutation("put", "/comment"));
+
+        await expect(result.mutateAsync({ body: { message: "Hello", replied_at: 0 } })).rejects.toThrow();
+      });
+
+      it("should use provided custom queryClient", async () => {
+        const fetchClient = createFetchClient<paths>({ baseUrl });
+        const client = createClient(fetchClient);
+        const customQueryClient = new QueryClient({});
+
+        useMockRequestHandler({
+          baseUrl,
+          method: "put",
+          path: "/comment",
+          status: 200,
+          body: { message: "Hello" },
+        });
+
+        const { result } = renderStore(queryClient, () =>
+          client.createMutation("put", "/comment", {}, customQueryClient),
+        );
+
+        const data = await result.mutateAsync({ body: { message: "Hello", replied_at: 0 } });
+
+        expect(data.message).toBe("Hello");
+      });
+    });
+  });
+
+  // TODO: test createInfiniteQuery
 });

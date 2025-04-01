@@ -1,7 +1,7 @@
 <script lang="ts" module>
 type T = unknown;
 
-export interface RenderStoreComponentProps {
+export interface RenderStoreProps {
   queryClient: QueryClient;
   callback: () => Readable<T>;
   result: Writable<T>;
@@ -13,7 +13,7 @@ import type { QueryClient } from "@tanstack/svelte-query";
 import { setContext } from "svelte";
 import type { Readable, Writable } from "svelte/store";
 
-let { queryClient, callback, result }: RenderStoreComponentProps = $props();
+let { queryClient, callback, result = $bindable() }: RenderStoreProps = $props();
 
 setContext("$$_queryClient", queryClient);
 
