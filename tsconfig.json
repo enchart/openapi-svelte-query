@@ -12,7 +12,7 @@
     "moduleResolution": "Bundler",
     "outDir": "dist",
     "skipLibCheck": true,
-    "sourceRoot": ".",
+    "sourceRoot": "./src",
     "target": "ES2022",
     "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
