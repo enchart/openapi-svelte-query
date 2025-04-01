@@ -65,6 +65,7 @@ Once your types have been generated from your schema, you can create a [fetch cl
 
 ## 📝 TODO
 
-- [ ] Add support for `prefetchQuery`
-- [x] Add tests for `createMutation`
-- [x] Add tests for `createInfiniteQuery`
+- [ ] Add support for `fetchQuery` and `fetchInfiniteQuery`
+- [ ] Add tests for `prefetchQuery` and `prefetchInfiniteQuery`
+- [ ] Add documentation for `prefetchQuery` and `prefetchInfiniteQuery`
+- [ ] Fix `prefetchInfiniteQuery` type error

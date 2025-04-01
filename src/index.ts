@@ -5,6 +5,9 @@ import {
   type CreateMutationResult,
   type CreateQueryOptions,
   type CreateQueryResult,
+  type FetchInfiniteQueryOptions,
+  type FetchQueryOptions,
+  GetNextPageParamFunction,
   type InfiniteData,
   type QueryClient,
   type QueryFunctionContext,
@@ -18,6 +21,7 @@ import type {
   DefaultParamsOption,
   Client as FetchClient,
   FetchResponse,
+  InitParam,
   MaybeOptionalInit,
 } from "openapi-fetch";
 import type { HttpMethod, MediaType, PathsWithMethod, RequiredKeysOf } from "openapi-typescript-helpers";
@@ -137,11 +141,59 @@ export type CreateMutationMethod<Paths extends Record<string, Record<HttpMethod,
   queryClient?: QueryClient,
 ) => CreateMutationResult<Response["data"], Response["error"], Init>;
 
+export type PrefetchQueryMethod<Paths extends Record<string, Record<HttpMethod, {}>>, Media extends MediaType> = <
+  Method extends HttpMethod,
+  Path extends PathsWithMethod<Paths, Method>,
+  Init extends MaybeOptionalInit<Paths[Path], Method>,
+  Response extends Required<FetchResponse<Paths[Path][Method], Init, Media>>, // note: Required is used to avoid repeating NonNullable in UseQuery types,
+  Options extends Omit<
+    FetchQueryOptions<Response["data"], Response["error"], Response["data"], QueryKey<Paths, Method, Path>>,
+    "queryKey" | "queryFn"
+  >,
+>(
+  queryClient: QueryClient,
+  method: Method,
+  url: Path,
+  ...[init, options]: RequiredKeysOf<Init> extends never
+    ? [InitWithUnknowns<Init>?, Options?]
+    : [InitWithUnknowns<Init>, Options?]
+) => Promise<void>;
+
+export type PrefetchInfiniteQueryMethod<
+  Paths extends Record<string, Record<HttpMethod, {}>>,
+  Media extends MediaType,
+> = <
+  Method extends HttpMethod,
+  Path extends PathsWithMethod<Paths, Method>,
+  Init extends MaybeOptionalInit<Paths[Path], Method>,
+  Response extends Required<FetchResponse<Paths[Path][Method], Init, Media>>, // note: Required is used to avoid repeating NonNullable in UseQuery types,
+  Options extends Omit<
+    FetchInfiniteQueryOptions<
+      Response["data"],
+      Response["error"],
+      InfiniteData<Response["data"]>,
+      QueryKey<Paths, Method, Path>,
+      unknown
+    >,
+    "queryKey" | "queryFn"
+  > & {
+    pageParamName?: string;
+  },
+>(
+  queryClient: QueryClient,
+  method: Method,
+  url: Path,
+  init: InitWithUnknowns<Init>,
+  options: Options,
+) => Promise<void>;
+
 export interface OpenapiQueryClient<Paths extends {}, Media extends MediaType = MediaType> {
   queryOptions: QueryOptionsFunction<Paths, Media>;
   createQuery: CreateQueryMethod<Paths, Media>;
   createInfiniteQuery: CreateInfiniteQueryMethod<Paths, Media>;
   createMutation: CreateMutationMethod<Paths, Media>;
+  prefetchQuery: PrefetchQueryMethod<Paths, Media>;
+  prefetchInfiniteQuery: PrefetchInfiniteQueryMethod<Paths, Media>;
 }
 
 export default function createClient<Paths extends {}, Media extends MediaType = MediaType>(
@@ -225,5 +277,40 @@ export default function createClient<Paths extends {}, Media extends MediaType =
         },
         queryClient,
       ),
+    prefetchQuery: (queryClient, method, path, ...[init, options]) => {
+      return queryClient.prefetchQuery(queryOptions(method, path, init as InitWithUnknowns<typeof init>, options));
+    },
+    prefetchInfiniteQuery: (queryClient, method, path, init, options) => {
+      const { pageParamName = "cursor", ...restOptions } = options;
+      const { queryKey } = queryOptions(method, path, init);
+
+      // TODO: resolve this type error
+      // @ts-expect-error: pages and getNextPageParam type conflict
+      return queryClient.prefetchInfiniteQuery({
+        queryKey,
+        queryFn: async ({ queryKey: [method, path, init], pageParam = 0, signal }) => {
+          const mth = method.toUpperCase() as Uppercase<typeof method>;
+          const fn = client[mth] as ClientMethod<Paths, typeof method, Media>;
+          const mergedInit = {
+            ...init,
+            signal,
+            params: {
+              ...(init?.params || {}),
+              query: {
+                ...(init?.params as { query?: DefaultParamsOption })?.query,
+                [pageParamName]: pageParam,
+              },
+            },
+          };
+
+          const { data, error } = await fn(path, mergedInit as any);
+          if (error) {
+            throw error;
+          }
+          return data;
+        },
+        ...restOptions,
+      });
+    },
   };
 }
