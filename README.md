@@ -67,4 +67,4 @@ Once your types have been generated from your schema, you can create a [fetch cl
 
 - [ ] Add support for `prefetchQuery`
 - [x] Add tests for `createMutation`
-- [ ] Add tests for `createInfiniteQuery`
+- [x] Add tests for `createInfiniteQuery`

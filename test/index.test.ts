@@ -369,7 +369,6 @@ describe("client", () => {
       });
     });
 
-    // TODO: check if this test was copied over correctly
     it("should use provided custom queryClient", async () => {
       const fetchClient = createFetchClient<paths>({ baseUrl });
       const client = createClient(fetchClient);
@@ -606,5 +605,261 @@ describe("client", () => {
     });
   });
 
-  // TODO: test createInfiniteQuery
+  describe("createInfiniteQuery", () => {
+    it("should fetch data correctly with pagination and include cursor", async () => {
+      const fetchClient = createFetchClient<paths>({ baseUrl });
+      const client = createClient(fetchClient);
+
+      // First page request handler
+      const firstRequestHandler = useMockRequestHandler({
+        baseUrl,
+        method: "get",
+        path: "/paginated-data",
+        status: 200,
+        body: { items: [1, 2, 3], nextPage: 1 },
+      });
+
+      const { store, rerender } = renderStore(queryClient, () =>
+        client.createInfiniteQuery(
+          "get",
+          "/paginated-data",
+          {
+            params: {
+              query: {
+                limit: 3,
+              },
+            },
+          },
+          {
+            getNextPageParam: (lastPage) => lastPage.nextPage,
+            initialPageParam: 0,
+          },
+        ),
+      );
+
+      // Wait for initial query to complete
+      await waitFor(() => expect(get(store).isSuccess).toBe(true));
+
+      // Verify first request
+      const firstRequestUrl = firstRequestHandler.getRequestUrl();
+      expect(firstRequestUrl?.searchParams.get("limit")).toBe("3");
+      expect(firstRequestUrl?.searchParams.get("cursor")).toBe("0");
+
+      // Set up mock for second page before triggering next page fetch
+      const secondRequestHandler = useMockRequestHandler({
+        baseUrl,
+        method: "get",
+        path: "/paginated-data",
+        status: 200,
+        body: { items: [4, 5, 6], nextPage: 2 },
+      });
+
+      // // Fetch next page
+      await act(async () => {
+        await get(store).fetchNextPage();
+        rerender();
+      });
+
+      // Wait for second page to be fetched and verify loading states
+      await waitFor(() => {
+        expect(get(store).isFetching).toBe(false);
+        expect(get(store).hasNextPage).toBe(true);
+        expect(get(store).data?.pages).toHaveLength(2);
+      });
+
+      // Verify second request
+      const secondRequestUrl = secondRequestHandler.getRequestUrl();
+      expect(secondRequestUrl?.searchParams.get("limit")).toBe("3");
+      expect(secondRequestUrl?.searchParams.get("cursor")).toBe("1");
+
+      const result = get(store);
+
+      expect(result.data).toBeDefined();
+      expect(result.data?.pages[0].nextPage).toBe(1);
+
+      expect(result.data).toBeDefined();
+      expect(result.data?.pages[1].nextPage).toBe(2);
+
+      // Verify the complete data structure
+      expect(result.data?.pages).toEqual([
+        { items: [1, 2, 3], nextPage: 1 },
+        { items: [4, 5, 6], nextPage: 2 },
+      ]);
+
+      // Verify we can access all items through pages
+      const allItems = result.data?.pages.flatMap((page) => page.items);
+      expect(allItems).toEqual([1, 2, 3, 4, 5, 6]);
+    });
+
+    it("should reverse pages and pageParams when using the select option", async () => {
+      const fetchClient = createFetchClient<paths>({ baseUrl });
+      const client = createClient(fetchClient);
+
+      // First page request handler
+      const firstRequestHandler = useMockRequestHandler({
+        baseUrl,
+        method: "get",
+        path: "/paginated-data",
+        status: 200,
+        body: { items: [1, 2, 3], nextPage: 1 },
+      });
+
+      const { store, rerender } = renderStore(queryClient, () =>
+        client.createInfiniteQuery(
+          "get",
+          "/paginated-data",
+          {
+            params: {
+              query: {
+                limit: 3,
+              },
+            },
+          },
+          {
+            getNextPageParam: (lastPage) => lastPage.nextPage,
+            initialPageParam: 0,
+            select: (data) => ({
+              pages: [...data.pages].reverse(),
+              pageParams: [...data.pageParams].reverse(),
+            }),
+          },
+        ),
+      );
+
+      // Wait for initial query to complete
+      await waitFor(() => expect(get(store).isSuccess).toBe(true));
+
+      // Verify first request
+      const firstRequestUrl = firstRequestHandler.getRequestUrl();
+      expect(firstRequestUrl?.searchParams.get("limit")).toBe("3");
+      expect(firstRequestUrl?.searchParams.get("cursor")).toBe("0");
+
+      // Set up mock for second page before triggering next page fetch
+      const secondRequestHandler = useMockRequestHandler({
+        baseUrl,
+        method: "get",
+        path: "/paginated-data",
+        status: 200,
+        body: { items: [4, 5, 6], nextPage: 2 },
+      });
+
+      // Fetch next page
+      await act(async () => {
+        await get(store).fetchNextPage();
+        rerender();
+      });
+
+      // Wait for second page to complete
+      await waitFor(() => {
+        expect(get(store).isFetching).toBe(false);
+        expect(get(store).hasNextPage).toBe(true);
+        expect(get(store).data?.pages).toHaveLength(2);
+      });
+
+      const result = get(store);
+
+      // Verify reversed pages and pageParams
+      expect(result.data).toBeDefined();
+
+      // Since pages are reversed, the second page will now come first
+      expect(result.data?.pages).toEqual([
+        { items: [4, 5, 6], nextPage: 2 },
+        { items: [1, 2, 3], nextPage: 1 },
+      ]);
+
+      // Verify reversed pageParams
+      expect(result.data?.pageParams).toEqual([1, 0]);
+
+      // Verify all items from reversed pages
+      const allItems = result.data?.pages.flatMap((page) => page.items);
+      expect(allItems).toEqual([4, 5, 6, 1, 2, 3]);
+    });
+
+    it("should use custom cursor params", async () => {
+      const fetchClient = createFetchClient<paths>({ baseUrl });
+      const client = createClient(fetchClient);
+
+      // First page request handler
+      const firstRequestHandler = useMockRequestHandler({
+        baseUrl,
+        method: "get",
+        path: "/paginated-data",
+        status: 200,
+        body: { items: [1, 2, 3], nextPage: 1 },
+      });
+
+      const { store, rerender } = renderStore(queryClient, () =>
+        client.createInfiniteQuery(
+          "get",
+          "/paginated-data",
+          {
+            params: {
+              query: {
+                limit: 3,
+              },
+            },
+          },
+          {
+            getNextPageParam: (lastPage) => lastPage.nextPage,
+            initialPageParam: 0,
+            pageParamName: "follow_cursor",
+          },
+        ),
+      );
+
+      // Wait for initial query to complete
+      await waitFor(() => expect(get(store).isSuccess).toBe(true));
+
+      // Verify first request
+      const firstRequestUrl = firstRequestHandler.getRequestUrl();
+      expect(firstRequestUrl?.searchParams.get("limit")).toBe("3");
+      expect(firstRequestUrl?.searchParams.get("follow_cursor")).toBe("0");
+
+      // Set up mock for second page before triggering next page fetch
+      const secondRequestHandler = useMockRequestHandler({
+        baseUrl,
+        method: "get",
+        path: "/paginated-data",
+        status: 200,
+        body: { items: [4, 5, 6], nextPage: 2 },
+      });
+
+      // Fetch next page
+      await act(async () => {
+        await get(store).fetchNextPage();
+        // Force a rerender to ensure state is updated
+        rerender();
+      });
+
+      // Wait for second page to be fetched and verify loading states
+      await waitFor(() => {
+        expect(get(store).isFetching).toBe(false);
+        expect(get(store).hasNextPage).toBe(true);
+        expect(get(store).data?.pages).toHaveLength(2);
+      });
+
+      // Verify second request
+      const secondRequestUrl = secondRequestHandler.getRequestUrl();
+      expect(secondRequestUrl?.searchParams.get("limit")).toBe("3");
+      expect(secondRequestUrl?.searchParams.get("follow_cursor")).toBe("1");
+
+      const result = get(store);
+
+      expect(result.data).toBeDefined();
+      expect(result.data?.pages[0].nextPage).toBe(1);
+
+      expect(result.data).toBeDefined();
+      expect(result.data?.pages[1].nextPage).toBe(2);
+
+      // Verify the complete data structure
+      expect(result.data?.pages).toEqual([
+        { items: [1, 2, 3], nextPage: 1 },
+        { items: [4, 5, 6], nextPage: 2 },
+      ]);
+
+      // Verify we can access all items through pages
+      const allItems = result.data?.pages.flatMap((page) => page.items);
+      expect(allItems).toEqual([1, 2, 3, 4, 5, 6]);
+    });
+  });
 });
