@@ -1,5 +1,5 @@
 <script lang="ts" module>
-type T = { data?: unknown };
+type T = unknown;
 
 export interface RenderStoreProps {
   queryClient: QueryClient;
@@ -8,7 +8,7 @@ export interface RenderStoreProps {
 }
 </script>
 
-<script lang="ts" generics="T extends { data?: unknown }">
+<script lang="ts" generics="T extends unknown">
 import type { QueryClient } from "@tanstack/svelte-query";
 import { setContext } from "svelte";
 import type { Readable, Writable } from "svelte/store";
@@ -24,4 +24,4 @@ $effect(() => {
 </script>
 
 {$store}
-{$store?.data}
+{($store as { data: unknown }).data}
