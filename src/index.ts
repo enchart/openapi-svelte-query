@@ -7,8 +7,9 @@ import {
   type CreateQueryResult,
   type FetchInfiniteQueryOptions,
   type FetchQueryOptions,
-  GetNextPageParamFunction,
+  type GetNextPageParamFunction,
   type InfiniteData,
+  type InitialPageParam,
   type QueryClient,
   type QueryFunctionContext,
   type SkipToken,
@@ -159,7 +160,14 @@ export type PrefetchQueryMethod<Paths extends Record<string, Record<HttpMethod, 
     : [InitWithUnknowns<Init>, Options?]
 ) => Promise<void>;
 
-export type FixedOmit<T, U> = T extends any ? Pick<T, Exclude<keyof T, U>> : never;
+type FetchInfiniteQueryPages<TQueryFnData = unknown, TPageParam = unknown> =
+  | {
+      pages?: never;
+    }
+  | {
+      pages: number;
+      getNextPageParam: GetNextPageParamFunction<TPageParam, TQueryFnData>;
+    };
 
 export type PrefetchInfiniteQueryMethod<
   Paths extends Record<string, Record<HttpMethod, {}>>,
@@ -169,18 +177,20 @@ export type PrefetchInfiniteQueryMethod<
   Path extends PathsWithMethod<Paths, Method>,
   Init extends MaybeOptionalInit<Paths[Path], Method>,
   Response extends Required<FetchResponse<Paths[Path][Method], Init, Media>>, // note: Required is used to avoid repeating NonNullable in UseQuery types,
-  Options extends FixedOmit<
-    FetchInfiniteQueryOptions<
+  Options extends Omit<
+    FetchQueryOptions<
       Response["data"],
       Response["error"],
       InfiniteData<Response["data"]>,
       QueryKey<Paths, Method, Path>,
       unknown
     >,
-    "queryKey" | "queryFn"
-  > & {
-    pageParamName?: string;
-  },
+    "queryKey" | "queryFn" | "initialPageParam"
+  > &
+    InitialPageParam<unknown> &
+    FetchInfiniteQueryPages<Response["data"], unknown> & {
+      pageParamName?: string;
+    },
 >(
   queryClient: QueryClient,
   method: Method,
