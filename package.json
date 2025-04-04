@@ -1,5 +1,5 @@
 {
-  "name": "@enchart/openapi-svelte-query",
+  "name": "@enchartpa/openapi-svelte-query",
   "description": "Fast, type-safe @tanstack/svelte-query client to work with your OpenAPI schema.",
   "version": "0.1.0",
   "author": {
