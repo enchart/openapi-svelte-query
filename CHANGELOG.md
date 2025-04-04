@@ -1,5 +1,12 @@
 # @enchartpa/openapi-svelte-query
 
+## 0.1.3
+
+### Patch Changes
+
+- 3a89988: Added ESBuild to dependencies
+- b00a886: Added build step to workflow
+
 ## 0.1.2
 
 ### Patch Changes
