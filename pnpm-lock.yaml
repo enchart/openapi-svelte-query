@@ -8,12 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@enchart/openapi-svelte-query':
-        specifier: 'link:'
-        version: 'link:'
-      openapi-svelte-query:
-        specifier: 'link:'
-        version: 'link:'
       openapi-typescript-helpers:
         specifier: ^0.0.15
         version: 0.0.15
