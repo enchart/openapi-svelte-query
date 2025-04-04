@@ -58,7 +58,8 @@
     "test": "pnpm run \"/^test:/\"",
     "test:js": "vitest run",
     "test:ts": "tsc --noEmit",
-    "version": "pnpm run prepare && pnpm run build"
+    "version": "pnpm run prepare && pnpm run build",
+    "ci:publish": "pnpm publish"
   },
   "dependencies": {
     "@enchart/openapi-svelte-query": "link:",
@@ -67,6 +68,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@changesets/cli": "^2.28.1",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@tanstack/svelte-query": "^5.71.1",
     "@testing-library/jest-dom": "^6.6.3",
