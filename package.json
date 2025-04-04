@@ -65,8 +65,6 @@
     "ci:publish": "pnpm publish"
   },
   "dependencies": {
-    "@enchart/openapi-svelte-query": "link:",
-    "openapi-svelte-query": "link:",
     "openapi-typescript-helpers": "^0.0.15"
   },
   "devDependencies": {
