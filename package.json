@@ -7,6 +7,9 @@
     "email": "enchart3410@gmail.com"
   },
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
