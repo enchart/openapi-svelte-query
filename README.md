@@ -17,7 +17,7 @@ It works by using [openapi-fetch](https://github.com/openapi-ts/openapi-typescri
 Install this library along with [openapi-fetch](https://github.com/openapi-ts/openapi-typescript/tree/main/packages/openapi-fetch) and [openapi-typescript](https://github.com/openapi-ts/openapi-typescript/tree/main/packages/openapi-typescript):
 
 ```bash
-npm i @enchart/openapi-svelte-query openapi-fetch
+npm i @enchartpa/openapi-svelte-query openapi-fetch
 npm i -D openapi-typescript typescript
 ```
 
