@@ -5,7 +5,6 @@ import {
   type CreateMutationResult,
   type CreateQueryOptions,
   type CreateQueryResult,
-  type FetchInfiniteQueryOptions,
   type FetchQueryOptions,
   type GetNextPageParamFunction,
   type InfiniteData,
@@ -22,7 +21,6 @@ import type {
   DefaultParamsOption,
   Client as FetchClient,
   FetchResponse,
-  InitParam,
   MaybeOptionalInit,
 } from "openapi-fetch";
 import type { HttpMethod, MediaType, PathsWithMethod, RequiredKeysOf } from "openapi-typescript-helpers";
