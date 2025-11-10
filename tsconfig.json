@@ -15,8 +15,7 @@
     "verbatimModuleSyntax": true,
     "outDir": "dist",
     "skipLibCheck": true,
-    "sourceRoot": ".",
-    "types": ["vitest/globals"]
+    "sourceRoot": "."
   },
   "include": ["src", "test", "*.ts"],
   "exclude": ["node_modules"]
