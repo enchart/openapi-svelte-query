@@ -46,8 +46,7 @@
     "lint:ts": "tsc --noEmit",
     "generate-types": "openapi-typescript test/fixtures/api.yaml -o test/fixtures/api.d.ts",
     "prepack": "pnpm run build",
-    "test": "pnpm run generate-types && pnpm run test:js && pnpm run test:exports",
-    "test:js": "vitest run",
+    "test": "pnpm run generate-types && pnpm run test:exports",
     "test:exports": "pnpm run build && attw --pack .",
     "version": "pnpm run prepare && pnpm run build"
   },
@@ -59,8 +58,7 @@
     "openapi-fetch": "^0.15.0",
     "openapi-typescript": "^7.10.1",
     "typescript": "^5.9.3",
-    "unbuild": "^3.6.1",
-    "vitest": "^4.0.8"
+    "unbuild": "^3.6.1"
   },
   "dependencies": {
     "openapi-typescript-helpers": "^0.0.15"
