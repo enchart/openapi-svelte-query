@@ -1,29 +1,16 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.1.1/schema.json",
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
-
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "root": true,
   "files": {
-    "ignoreUnknown": false,
-    "includes": [
-      "**",
-      "!**/.svelte-kit",
-      "!**/.next",
-      "!**/dist",
-      "!**/.turbo",
-      "!**/dev-dist",
-      "!**/.zed",
-      "!**/.vscode",
-      "!**/routeTree.gen.ts",
-      "!**/src-tauri",
-      "!**/.nuxt",
-      "!bts.jsonc",
-      "!**/.expo",
-      "!**/.wrangler",
-      "!flake.lock",
-      "!./test/fixtures/*.ts",
-      "!**/package.json",
-      "!**/dist"
-    ]
+    "includes": ["**", "!**/dist", "!**/package.json"]
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
   },
   "formatter": {
     "indentStyle": "space",
@@ -36,31 +23,16 @@
       "recommended": true,
       "complexity": {
         "noExcessiveNestedTestSuites": "off",
-        "useArrowFunction": "off",
-        "noBannedTypes": "off"
+        "useArrowFunction": "off"
       },
       "suspicious": {
-        "noConsole": { "level": "error", "options": { "allow": ["error", "warn"] } },
-        "noExplicitAny": "off",
-        "noConfusingVoidType": "off"
+        "noConsole": "error",
+        "noExplicitAny": "off"
       },
       "style": {
         "noUselessElse": "off",
         "useBlockStatements": "error"
       }
     }
-  },
-  "overrides": [
-    {
-      "includes": ["*.svelte", "*.astro", "*.vue"],
-      "linter": {
-        "rules": {
-          "style": {
-            "useConst": "off",
-            "useImportType": "off"
-          }
-        }
-      }
-    }
-  ]
+  }
 }

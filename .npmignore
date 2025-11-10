@@ -1,10 +1,5 @@
-.changeset
-.github
-.vscode
+*.config.*
 test
 vitest.config.ts
-vitest-setup.js
 tsconfig*.json
 biome.json
-pnpm-workspace.yaml
-pnpm-lock.yaml
