@@ -5,6 +5,9 @@ import {
   type CreateMutationResult,
   type CreateQueryOptions,
   type CreateQueryResult,
+  createInfiniteQuery,
+  createMutation,
+  createQuery,
   type FetchQueryOptions,
   type GetNextPageParamFunction,
   type InfiniteData,
@@ -12,9 +15,6 @@ import {
   type QueryClient,
   type QueryFunctionContext,
   type SkipToken,
-  createInfiniteQuery,
-  createMutation,
-  createQuery,
 } from "@tanstack/svelte-query";
 import type {
   ClientMethod,
@@ -111,7 +111,6 @@ export type CreateInfiniteQueryMethod<Paths extends Record<string, Record<HttpMe
       Response["data"],
       Response["error"],
       InfiniteData<Response["data"]>,
-      Response["data"],
       QueryKey<Paths, Method, Path>,
       unknown
     >,
@@ -236,12 +235,23 @@ export default function createClient<Paths extends {}, Media extends MediaType =
   return {
     queryOptions,
     createQuery: (method, path, ...[init, options, queryClient]) =>
-      createQuery(queryOptions(method, path, init as InitWithUnknowns<typeof init>, options), queryClient),
+      createQuery(
+        () => ({
+          queryKey: (init === undefined ? ([method, path] as const) : ([method, path, init] as const)) as QueryKey<
+            Paths,
+            typeof method,
+            typeof path
+          >,
+          queryFn,
+          ...options,
+        }),
+        queryClient ? () => queryClient : undefined,
+      ),
     createInfiniteQuery: (method, path, init, options, queryClient) => {
       const { pageParamName = "cursor", ...restOptions } = options;
       const { queryKey } = queryOptions(method, path, init);
       return createInfiniteQuery(
-        {
+        () => ({
           queryKey,
           queryFn: async ({ queryKey: [method, path, init], pageParam = 0, signal }) => {
             const mth = method.toUpperCase() as Uppercase<typeof method>;
@@ -265,13 +275,13 @@ export default function createClient<Paths extends {}, Media extends MediaType =
             return data;
           },
           ...restOptions,
-        },
-        queryClient,
+        }),
+        queryClient ? () => queryClient : undefined,
       );
     },
     createMutation: (method, path, options, queryClient) =>
       createMutation(
-        {
+        () => ({
           mutationKey: [method, path],
           mutationFn: async (init) => {
             const mth = method.toUpperCase() as Uppercase<typeof method>;
@@ -284,8 +294,8 @@ export default function createClient<Paths extends {}, Media extends MediaType =
             return data as Exclude<typeof data, undefined>;
           },
           ...options,
-        },
-        queryClient,
+        }),
+        queryClient ? () => queryClient : undefined,
       ),
     prefetchQuery: (queryClient, method, path, ...[init, options]) => {
       return queryClient.prefetchQuery(queryOptions(method, path, init as InitWithUnknowns<typeof init>, options));

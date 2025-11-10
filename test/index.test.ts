@@ -1,11 +1,10 @@
 import { createQueries, createQuery, QueryClient, skipToken } from "@tanstack/svelte-query";
 import { act, waitFor } from "@testing-library/svelte";
 import createFetchClient, { type MethodResponse } from "openapi-fetch";
-import { get } from "svelte/store";
 import createClient from "../src";
 import type { paths } from "./fixtures/api";
 import { baseUrl, server, useMockRequestHandler } from "./fixtures/mock-server";
-import { renderStore } from "./utils/render-store";
+import { renderState } from "./utils/state.svelte";
 
 type minimalGetPaths = {
   // Without parameters.
@@ -114,9 +113,10 @@ describe("client", () => {
       const fetchClient = createFetchClient<paths>({ baseUrl, fetch: fetchInfinite });
       const client = createClient(fetchClient);
 
-      const { result } = renderStore(queryClient, () =>
+      const { result } = renderState(
+        queryClient,
         createQueries(
-          {
+          () => ({
             queries: [
               client.queryOptions("get", "/string-array"),
               client.queryOptions("get", "/string-array", {}),
@@ -135,8 +135,8 @@ describe("client", () => {
                 },
               }),
             ],
-          },
-          queryClient,
+          }),
+          () => queryClient,
         ),
       );
 
@@ -167,19 +167,19 @@ describe("client", () => {
       const fetchClient = createFetchClient<minimalGetPaths>({ baseUrl });
       const client = createClient(fetchClient);
 
-      const { result } = renderStore(queryClient, () =>
+      const { result } = renderState(queryClient, () =>
         createQuery(
           // biome-ignore lint/correctness/noConstantCondition: it's just here to test types
           false
-            ? {
+            ? () => ({
                 ...client.queryOptions("get", "/foo"),
                 select: (data) => {
                   expectTypeOf(data).toEqualTypeOf<true>();
 
                   return "select(true)" as const;
                 },
-              }
-            : SKIP,
+              })
+            : () => SKIP,
         ),
       );
 
@@ -212,11 +212,11 @@ describe("client", () => {
         body: response,
       });
 
-      const { store } = renderStore(queryClient, () => client.createQuery("get", "/string-array"));
+      const { state } = renderState(queryClient, () => client.createQuery("get", "/string-array"));
 
-      await waitFor(() => expect(get(store).isFetching).toBe(false));
+      await waitFor(() => expect(state.isFetching).toBe(false));
 
-      const { data, error } = get(store);
+      const { data, error } = state;
 
       expect(data).toEqual(response);
       expect(error).toBe(null);
@@ -234,11 +234,11 @@ describe("client", () => {
         body: { code: 500, message: "Something went wrong" },
       });
 
-      const { store } = renderStore(queryClient, () => client.createQuery("get", "/string-array"));
+      const { state } = renderState(queryClient, () => client.createQuery("get", "/string-array"));
 
-      await waitFor(() => expect(get(store).isFetching).toBe(false));
+      await waitFor(() => expect(state.isFetching).toBe(false));
 
-      const { data, error } = get(store);
+      const { data, error } = state;
 
       expect(error?.message).toBe("Something went wrong");
       expect(data).toBeUndefined();
@@ -256,11 +256,11 @@ describe("client", () => {
         body: null,
       });
 
-      const { store } = renderStore(queryClient, () => client.createQuery("get", "/string-array"));
+      const { state } = renderState(queryClient, () => client.createQuery("get", "/string-array"));
 
-      await waitFor(() => expect(get(store).isFetching).toBe(false));
+      await waitFor(() => expect(state.isFetching).toBe(false));
 
-      const { data, error } = get(store);
+      const { data, error } = state;
 
       expect(data).toBeNull();
       expect(error).toBeNull();
@@ -278,11 +278,11 @@ describe("client", () => {
         body: undefined,
       });
 
-      const { store } = renderStore(queryClient, () => client.createQuery("get", "/string-array"));
+      const { state } = renderState(queryClient, () => client.createQuery("get", "/string-array"));
 
-      await waitFor(() => expect(get(store).isFetching).toBe(false));
+      await waitFor(() => expect(state.isFetching).toBe(false));
 
-      const { data, error } = get(store);
+      const { data, error } = state;
 
       expect(error).toBeInstanceOf(Error);
       expect(data).toBeUndefined();
@@ -292,7 +292,7 @@ describe("client", () => {
       const fetchClient = createFetchClient<paths>({ baseUrl, fetch: fetchInfinite });
       const client = createClient(fetchClient);
 
-      const { result } = renderStore(queryClient, () => client.createQuery("get", "/string-array"));
+      const { result } = renderState(queryClient, () => client.createQuery("get", "/string-array"));
 
       const { data, error } = result;
 
@@ -305,7 +305,7 @@ describe("client", () => {
       const fetchClient = createFetchClient<paths>({ baseUrl, fetch: fetchInfinite });
       const client = createClient(fetchClient);
 
-      const { result } = renderStore(queryClient, () =>
+      const { result } = renderState(queryClient, () =>
         client.createQuery(
           "get",
           "/string-array",
@@ -342,7 +342,7 @@ describe("client", () => {
       });
       const client = createClient(fetchClient);
 
-      const { unmount } = renderStore(queryClient, () => client.createQuery("get", "/string-array"));
+      const { unmount } = renderState(queryClient, () => client.createQuery("get", "/string-array"));
 
       unmount();
 
@@ -364,8 +364,8 @@ describe("client", () => {
 
         // expect error on missing 'params'
         // @ts-expect-error
-        const { store } = renderStore(queryClient, () => client.createQuery("get", "/blogposts/{post_id}"));
-        await waitFor(() => expect(get(store).isSuccess).toBe(true));
+        const { state } = renderState(queryClient, () => client.createQuery("get", "/blogposts/{post_id}"));
+        await waitFor(() => expect(state.isSuccess).toBe(true));
       });
     });
 
@@ -383,7 +383,7 @@ describe("client", () => {
         body: { title: "hello" },
       });
 
-      const { store } = renderStore(queryClient, () =>
+      const { state } = renderState(queryClient, () =>
         client.createQuery(
           "get",
           "/blogposts/{post_id}",
@@ -399,7 +399,7 @@ describe("client", () => {
         ),
       );
 
-      await waitFor(() => expect(get(store).isSuccess).toBe(true));
+      await waitFor(() => expect(state.isSuccess).toBe(true));
     });
 
     it("uses provided options", async () => {
@@ -407,7 +407,7 @@ describe("client", () => {
       const fetchClient = createFetchClient<paths>({ baseUrl });
       const client = createClient(fetchClient);
 
-      const { result } = renderStore(queryClient, () =>
+      const { result } = renderState(queryClient, () =>
         client.createQuery("get", "/string-array", {}, { enabled: false, initialData }),
       );
 
@@ -432,13 +432,13 @@ describe("client", () => {
           body: { message: "Hello" },
         });
 
-        const { store } = renderStore(queryClient, () => client.createMutation("put", "/comment"));
+        const { state } = renderState(queryClient, () => client.createMutation("put", "/comment"));
 
-        get(store).mutate({ body: { message: "Hello", replied_at: 0 } });
+        state.mutate({ body: { message: "Hello", replied_at: 0 } });
 
-        await waitFor(() => expect(get(store).isSuccess).toBe(true));
+        await waitFor(() => expect(state.isSuccess).toBe(true));
 
-        const { data, error } = get(store);
+        const { data, error } = state;
 
         expect(data?.message).toBe("Hello");
         expect(error).toBeNull();
@@ -456,13 +456,13 @@ describe("client", () => {
           body: { code: 500, message: "Something went wrong" },
         });
 
-        const { store } = renderStore(queryClient, () => client.createMutation("put", "/comment"));
+        const { state } = renderState(queryClient, () => client.createMutation("put", "/comment"));
 
-        get(store).mutate({ body: { message: "Hello", replied_at: 0 } });
+        state.mutate({ body: { message: "Hello", replied_at: 0 } });
 
-        await waitFor(() => expect(get(store).isError).toBe(true));
+        await waitFor(() => expect(state.isError).toBe(true));
 
-        const { data, error } = get(store);
+        const { data, error } = state;
 
         expect(data).toBeUndefined();
         expect(error?.message).toBe("Something went wrong");
@@ -480,13 +480,13 @@ describe("client", () => {
           body: null,
         });
 
-        const { store } = renderStore(queryClient, () => client.createMutation("put", "/comment"));
+        const { state } = renderState(queryClient, () => client.createMutation("put", "/comment"));
 
-        get(store).mutate({ body: { message: "Hello", replied_at: 0 } });
+        state.mutate({ body: { message: "Hello", replied_at: 0 } });
 
-        await waitFor(() => expect(get(store).isSuccess).toBe(true));
+        await waitFor(() => expect(state.isSuccess).toBe(true));
 
-        const { data, error } = get(store);
+        const { data, error } = state;
 
         expect(data).toBeNull();
         expect(error).toBeNull();
@@ -504,13 +504,13 @@ describe("client", () => {
           body: undefined,
         });
 
-        const { store } = renderStore(queryClient, () => client.createMutation("put", "/comment"));
+        const { state } = renderState(queryClient, () => client.createMutation("put", "/comment"));
 
-        get(store).mutate({ body: { message: "Hello", replied_at: 0 } });
+        state.mutate({ body: { message: "Hello", replied_at: 0 } });
 
-        await waitFor(() => expect(get(store).isSuccess).toBe(true));
+        await waitFor(() => expect(state.isSuccess).toBe(true));
 
-        const { data, error } = get(store);
+        const { data, error } = state;
 
         expect(error).toBeNull();
         expect(data).toBeUndefined();
@@ -529,15 +529,15 @@ describe("client", () => {
           body: { message: "Hello" },
         });
 
-        const { store } = renderStore(customQueryClient, () =>
+        const { state } = renderState(customQueryClient, () =>
           client.createMutation("put", "/comment", {}, customQueryClient),
         );
 
-        get(store).mutate({ body: { message: "Hello", replied_at: 0 } });
+        state.mutate({ body: { message: "Hello", replied_at: 0 } });
 
-        await waitFor(() => expect(get(store).isSuccess).toBe(true));
+        await waitFor(() => expect(state.isSuccess).toBe(true));
 
-        const { data, error } = get(store);
+        const { data, error } = state;
 
         expect(data?.message).toBe("Hello");
         expect(error).toBeNull();
@@ -557,7 +557,7 @@ describe("client", () => {
           body: { message: "Hello" },
         });
 
-        const { result } = renderStore(queryClient, () => client.createMutation("put", "/comment"));
+        const { result } = renderState(queryClient, () => client.createMutation("put", "/comment"));
 
         const data = await result.mutateAsync({ body: { message: "Hello", replied_at: 0 } });
 
@@ -576,7 +576,7 @@ describe("client", () => {
           body: { code: 500, message: "Something went wrong" },
         });
 
-        const { result } = renderStore(queryClient, () => client.createMutation("put", "/comment"));
+        const { result } = renderState(queryClient, () => client.createMutation("put", "/comment"));
 
         await expect(result.mutateAsync({ body: { message: "Hello", replied_at: 0 } })).rejects.toThrow();
       });
@@ -594,7 +594,7 @@ describe("client", () => {
           body: { message: "Hello" },
         });
 
-        const { result } = renderStore(queryClient, () =>
+        const { result } = renderState(queryClient, () =>
           client.createMutation("put", "/comment", {}, customQueryClient),
         );
 
@@ -619,7 +619,7 @@ describe("client", () => {
         body: { items: [1, 2, 3], nextPage: 1 },
       });
 
-      const { store, rerender } = renderStore(queryClient, () =>
+      const { state, rerender } = renderState(queryClient, () =>
         client.createInfiniteQuery(
           "get",
           "/paginated-data",
@@ -638,7 +638,7 @@ describe("client", () => {
       );
 
       // Wait for initial query to complete
-      await waitFor(() => expect(get(store).isSuccess).toBe(true));
+      await waitFor(() => expect(state.isSuccess).toBe(true));
 
       // Verify first request
       const firstRequestUrl = firstRequestHandler.getRequestUrl();
@@ -656,15 +656,15 @@ describe("client", () => {
 
       // // Fetch next page
       await act(async () => {
-        await get(store).fetchNextPage();
+        await state.fetchNextPage();
         rerender();
       });
 
       // Wait for second page to be fetched and verify loading states
       await waitFor(() => {
-        expect(get(store).isFetching).toBe(false);
-        expect(get(store).hasNextPage).toBe(true);
-        expect(get(store).data?.pages).toHaveLength(2);
+        expect(state.isFetching).toBe(false);
+        expect(state.hasNextPage).toBe(true);
+        expect(state.data?.pages).toHaveLength(2);
       });
 
       // Verify second request
@@ -672,7 +672,7 @@ describe("client", () => {
       expect(secondRequestUrl?.searchParams.get("limit")).toBe("3");
       expect(secondRequestUrl?.searchParams.get("cursor")).toBe("1");
 
-      const result = get(store);
+      const result = state;
 
       expect(result.data).toBeDefined();
       expect(result.data?.pages[0].nextPage).toBe(1);
@@ -704,7 +704,7 @@ describe("client", () => {
         body: { items: [1, 2, 3], nextPage: 1 },
       });
 
-      const { store, rerender } = renderStore(queryClient, () =>
+      const { state, rerender } = renderState(queryClient, () =>
         client.createInfiniteQuery(
           "get",
           "/paginated-data",
@@ -727,7 +727,7 @@ describe("client", () => {
       );
 
       // Wait for initial query to complete
-      await waitFor(() => expect(get(store).isSuccess).toBe(true));
+      await waitFor(() => expect(state.isSuccess).toBe(true));
 
       // Verify first request
       const firstRequestUrl = firstRequestHandler.getRequestUrl();
@@ -745,18 +745,18 @@ describe("client", () => {
 
       // Fetch next page
       await act(async () => {
-        await get(store).fetchNextPage();
+        await state.fetchNextPage();
         rerender();
       });
 
       // Wait for second page to complete
       await waitFor(() => {
-        expect(get(store).isFetching).toBe(false);
-        expect(get(store).hasNextPage).toBe(true);
-        expect(get(store).data?.pages).toHaveLength(2);
+        expect(state.isFetching).toBe(false);
+        expect(state.hasNextPage).toBe(true);
+        expect(state.data?.pages).toHaveLength(2);
       });
 
-      const result = get(store);
+      const result = state;
 
       // Verify reversed pages and pageParams
       expect(result.data).toBeDefined();
@@ -788,7 +788,7 @@ describe("client", () => {
         body: { items: [1, 2, 3], nextPage: 1 },
       });
 
-      const { store, rerender } = renderStore(queryClient, () =>
+      const { state, rerender } = renderState(queryClient, () =>
         client.createInfiniteQuery(
           "get",
           "/paginated-data",
@@ -808,7 +808,7 @@ describe("client", () => {
       );
 
       // Wait for initial query to complete
-      await waitFor(() => expect(get(store).isSuccess).toBe(true));
+      await waitFor(() => expect(state.isSuccess).toBe(true));
 
       // Verify first request
       const firstRequestUrl = firstRequestHandler.getRequestUrl();
@@ -826,16 +826,16 @@ describe("client", () => {
 
       // Fetch next page
       await act(async () => {
-        await get(store).fetchNextPage();
+        await state.fetchNextPage();
         // Force a rerender to ensure state is updated
         rerender();
       });
 
       // Wait for second page to be fetched and verify loading states
       await waitFor(() => {
-        expect(get(store).isFetching).toBe(false);
-        expect(get(store).hasNextPage).toBe(true);
-        expect(get(store).data?.pages).toHaveLength(2);
+        expect(state.isFetching).toBe(false);
+        expect(state.hasNextPage).toBe(true);
+        expect(state.data?.pages).toHaveLength(2);
       });
 
       // Verify second request
@@ -843,7 +843,7 @@ describe("client", () => {
       expect(secondRequestUrl?.searchParams.get("limit")).toBe("3");
       expect(secondRequestUrl?.searchParams.get("follow_cursor")).toBe("1");
 
-      const result = get(store);
+      const result = state;
 
       expect(result.data).toBeDefined();
       expect(result.data?.pages[0].nextPage).toBe(1);

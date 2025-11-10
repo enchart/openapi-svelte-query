@@ -54,12 +54,12 @@ Once your types have been generated from your schema, you can create a [fetch cl
   );
 </script>
 
-{#if $query.isPending || !$query.data}
+{#if query.isPending || !query.data}
   Loading...
 {:else if $query.error}
-  An error occurred: {$query.error.message}
+  An error occurred: {query.error.message}
 {:else}
-  <div>{$query.data.title}</div>
+  <div>{query.data.title}</div>
 {/if}
 ```
 

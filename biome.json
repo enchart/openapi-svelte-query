@@ -1,10 +1,29 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "organizeImports": {
-    "enabled": false
-  },
+  "$schema": "https://biomejs.dev/schemas/2.1.1/schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+
   "files": {
-    "ignore": ["**/dist/**", "**/package.json", "./test/fixtures/"]
+    "ignoreUnknown": false,
+    "includes": [
+      "**",
+      "!**/.svelte-kit",
+      "!**/.next",
+      "!**/dist",
+      "!**/.turbo",
+      "!**/dev-dist",
+      "!**/.zed",
+      "!**/.vscode",
+      "!**/routeTree.gen.ts",
+      "!**/src-tauri",
+      "!**/.nuxt",
+      "!bts.jsonc",
+      "!**/.expo",
+      "!**/.wrangler",
+      "!flake.lock",
+      "!./test/fixtures/*.ts",
+      "!**/package.json",
+      "!**/dist"
+    ]
   },
   "formatter": {
     "indentStyle": "space",
@@ -21,7 +40,7 @@
         "noBannedTypes": "off"
       },
       "suspicious": {
-        "noConsoleLog": "error",
+        "noConsole": { "level": "error", "options": { "allow": ["error", "warn"] } },
         "noExplicitAny": "off",
         "noConfusingVoidType": "off"
       },
@@ -33,7 +52,7 @@
   },
   "overrides": [
     {
-      "include": ["*.svelte", "*.astro", "*.vue"],
+      "includes": ["*.svelte", "*.astro", "*.vue"],
       "linter": {
         "rules": {
           "style": {
